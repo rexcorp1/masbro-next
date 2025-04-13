@@ -2,8 +2,9 @@
 
 // ----- Import LangChain dan Modul Terkait -----
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-// Hapus import ini karena kita pakai string literal di bawah
-// import { HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+// --- PASTIKAN IMPORT ENUM INI ADA LAGI ---
+import { HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+// -----------------------------------------
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { HumanMessage, AIMessage, SystemMessage, BaseMessage } from "@langchain/core/messages";
 import { StringOutputParser } from "@langchain/core/output_parsers";
@@ -30,22 +31,22 @@ const model = new ChatGoogleGenerativeAI({
   maxOutputTokens: 8192,
   topK: 64,
   topP: 0.95,
-  // --- PERBAIKAN DI SINI ---
+  // --- GUNAKAN KEMBALI ENUM SESUAI DOKUMENTASI GOOGLE ---
   safetySettings: [
     {
-      category: "HARM_CATEGORY_HARASSMENT", // Pakai string literal
-      threshold: "BLOCK_LOW_AND_ABOVE",    // Pakai string literal
+      category: HarmCategory.HARM_CATEGORY_HARASSMENT, // Pakai enum
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,    // Pakai enum
     },
     {
-      category: "HARM_CATEGORY_HATE_SPEECH", // Pakai string literal
-      threshold: "BLOCK_MEDIUM_AND_ABOVE", // Pakai string literal
+      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, // Pakai enum
+      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE, // Pakai enum
     },
-    // Tambahkan kategori lain jika perlu (dengan format string)
+    // Tambahkan kategori lain jika perlu (dengan format enum)
     // Contoh:
-    // { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-    // { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+    // { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+    // { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
   ],
-  // --- AKHIR PERBAIKAN ---
+  // --- AKHIR PERUBAHAN ---
 });
 
 // 3. Output Parser
