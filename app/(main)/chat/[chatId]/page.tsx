@@ -22,7 +22,7 @@ import { useUser } from "@clerk/nextjs";
 import { ChatSession } from "@/types/conversation-types";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
-import { generateGoogleSearch } from "@/lib/langchain";
+// HAPUS IMPORT INI: import { generateGoogleSearch } from "@/lib/langchain";
 import useSpeechSynthesis from "@/hooks/read-audio";
 import ActionTooltip from "@/components/action-tooltip";
 import TextTypewriter from "@/components/typewriter/text-typewriter";
@@ -48,9 +48,9 @@ const ChatResponse = () => {
   const currentSessionPathId = pathname.split("/").pop();
   const messageContainerRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadingSearch, setLoadingSearch] = useState(false);
+  // HAPUS STATE INI: const [loadingSearch, setLoadingSearch] = useState(false);
   const [generatedPromptSearch, setGeneratedPromptSearch] = useState<string[]>(
-    []
+    [] // Tetap simpan untuk komponen PromptGoogleSearches, tapi isinya kosong
   );
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [audioMessageId, setAudioMessageId] = useState<string | null>(null);
@@ -79,7 +79,6 @@ const ChatResponse = () => {
   const handleReadAloud = (text: string, messageId: string | null) => {
     if (!isSpeaking) {
       setLoading(true);
-      //remove any special characters from the text
       speak(text.replace(/[^\w\s]/gi, ""));
       setAudioMessageId(messageId);
       setLoading(false);
@@ -102,20 +101,17 @@ const ChatResponse = () => {
     setEditingMessageId(null);
   };
 
-  const handleShowSearches = async (text: string, id: string | null) => {
-    try {
-      setMessageId(id);
-      setEditedText(text);
-      setShowGoogleSearches(!showGoogleSearches);
-      setLoadingSearch(true);
+  // UBAH FUNGSI INI
+  const handleShowSearches = (text: string, id: string | null) => {
+    setMessageId(id);
+    // Toggle tampilan komponen pencarian
+    setShowGoogleSearches(prev => !prev);
 
-      const response = await generateGoogleSearch(text);
-      //remove any special characters and split each search result to a new line
-      const reponseArray = response.replace(/[^\w\s]/gi, "").split("\n");
-      setGeneratedPromptSearch(reponseArray);
-      setLoadingSearch(false);
-    } catch (error) {
-      console.log("error generating google searches", error);
+    // Jika baru mau menampilkan, beri tahu user fiturnya belum aktif
+    if (!showGoogleSearches) {
+        console.log("Tombol Google Search diklik, fitur belum diimplementasikan.");
+        toast.info("Fitur pencarian Google akan segera hadir!");
+        setGeneratedPromptSearch([]); // Kosongkan hasil pencarian sebelumnya
     }
   };
 
@@ -148,22 +144,31 @@ const ChatResponse = () => {
                       theme === "dark" ? "dark-mode" : "light-mode"
                     )}
                   >
+                    {/* ... (Kode untuk menampilkan avatar user tetap sama) ... */}
                     <div className='flex items-start w-full group gap-[10px]'>
                       {message.sender == "user" ? (
                         <Image
                           src={user?.imageUrl as string}
-                          alt='gemini_icon'
+                          alt='user_icon' // Ganti alt text jika perlu
                           className='w-[38px] h-[38px] mt-[0.7em] cursor-pointer rounded-full'
                           loading='lazy'
-                          width={500}
-                          height={500}
+                          width={38} // Sesuaikan dengan className
+                          height={38} // Sesuaikan dengan className
                           blurDataURL={user?.imageUrl as string}
                           placeholder='blur'
                         />
                       ) : (
-                        ""
+                        // Jika sender AI, mungkin tampilkan ikon AI di sini atau biarkan kosong
+                         <Image
+                          src={assets.gemini_icon} // Asumsi ada ikon gemini di assets
+                          alt='ai_icon'
+                          className='w-[38px] h-[38px] mt-[0.7em] rounded-full'
+                          width={38}
+                          height={38}
+                        />
                       )}
                       <div className='flex items-start justify-start gap-x-3 flex-1 mx-2 relative mt-1'>
+                        {/* ... (Kode untuk edit message user tetap sama) ... */}
                         {editingMessageId === message.id ? (
                           <>
                             {message.sender === "user" ? (
@@ -178,7 +183,7 @@ const ChatResponse = () => {
                                 <div className='flex gap-x-3 mt-[2em]'>
                                   <Button
                                     onClick={() => setEditingMessageId(null)}
-                                    className='background-none text-[3a8c7fa] dark:text-[#a8c7fa] dark:hover:bg-[#131314]'
+                                    className='background-none text-[#a8c7fa] dark:text-[#a8c7fa] dark:hover:bg-[#131314]' // Perbaiki warna text
                                   >
                                     Cancel
                                   </Button>
@@ -209,7 +214,7 @@ const ChatResponse = () => {
                             ) : null}
                           </>
                         )}
-                        {message.sender === "user" && (
+                         {message.sender === "user" && (
                           <div className='w-[40px] h-[40px] items-center justify-center rounded-full group-hover:flex hidden dark:group-hover:bg-[#37393b] group-hover:bg-[#f0f4f9] ml-3'>
                             <ActionTooltip
                               align='center'
@@ -221,7 +226,7 @@ const ChatResponse = () => {
                                 width={24}
                                 height={24}
                                 onClick={() =>
-                                  handleEditMessage(message.id, message.text)
+                                  handleEditMessage(message.id || "", message.text) // Pastikan message.id tidak null
                                 }
                               />
                             </ActionTooltip>
@@ -231,7 +236,8 @@ const ChatResponse = () => {
                     </div>
 
                     <section className='w-full'>
-                      {message.sender === "ai" && (
+                      {/* ... (Kode untuk tombol Read Aloud tetap sama) ... */}
+                       {message.sender === "ai" && (
                         <div className='w-full flex items-end justify-end  mb-[20px]'>
                           <ActionTooltip
                             align='center'
@@ -246,7 +252,7 @@ const ChatResponse = () => {
                           >
                             <Button
                               onClick={() =>
-                                handleReadAloud(message.text, message.id)
+                                handleReadAloud(message.text, message.id || null) // Pastikan message.id tidak undefined
                               }
                               className={cn(
                                 "w-[40px] h-[40px] p-2 rounded-full bg-[#f0f4f9] dark:bg-[#1e1f20]",
@@ -275,10 +281,11 @@ const ChatResponse = () => {
                           </ActionTooltip>
                         </div>
                       )}
+                      {/* ... (Kode ReactMarkdown tetap sama) ... */}
                       {message.sender === "ai" && (
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
-                          className='w-full dark:text-white'
+                          className='w-full dark:text-white prose dark:prose-invert' // Tambahkan class prose untuk styling default
                           components={{
                             code({
                               node,
@@ -293,14 +300,13 @@ const ChatResponse = () => {
                                 <CodeBlock
                                   language={match[1]}
                                   value={String(children).replace(/\n$/, "")}
-                                  //@ts-ignore
+                                  //@ts-ignore - Biarkan jika theme tidak sesuai prop CodeBlock
                                   theme={theme}
                                 />
                               ) : (
                                 <code
                                   className={cn(
-                                    "p-4 rounded-[4px]",
-                                    theme === "light" ? "#f0f4f9" : "c4c7c5",
+                                    "bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm", // Styling inline code lebih baik
                                     className
                                   )}
                                   {...props}
@@ -309,8 +315,12 @@ const ChatResponse = () => {
                                 </code>
                               );
                             },
+                            // Tambahkan styling lain jika perlu, misal untuk list, heading, dll.
+                            // p: ({node, ...props}) => <p className="mb-4" {...props} />,
+                            // ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4" {...props} />,
+                            // ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-4" {...props} />,
                           }}
-                        > 
+                        >
                         {message.text}
                           {/* <TextTypewriter text={message.text}/> */}
                         </ReactMarkdown>
@@ -318,82 +328,78 @@ const ChatResponse = () => {
                       {message.sender === "ai" && (
                         <>
                           <div className='flex gap-x-2 mt-2'>
-                            <Button className='' disabled>
+                            {/* ... (Tombol ThumbsUp, ThumbsDown, Share tetap sama) ... */}
+                             <Button className='' disabled>
                               <assets.ThumbsUp
                                 className='fill-[#1f1f1f] w-[20px] h-[20px] dark:fill-white'
-                                width={24}
-                                height={24}
+                                width={20} // Sesuaikan
+                                height={20} // Sesuaikan
                               />
                             </Button>
                             <Button disabled>
                               <assets.ThumbsDown
                                 className='fill-[#1f1f1f]  w-[20px] h-[20px] dark:fill-white'
-                                width={24}
-                                height={24}
+                                width={20} // Sesuaikan
+                                height={20} // Sesuaikan
                               />
                             </Button>
                             <Button>
                               <assets.Share
                                 className='fill-[#1f1f1f]  w-[20px] h-[20px] dark:fill-white'
-                                width={24}
-                                height={24}
+                                width={20} // Sesuaikan
+                                height={20} // Sesuaikan
                               />
                             </Button>
+                            {/* UBAH TOMBOL GOOGLE */}
                             <Button
                               onClick={() =>
-                                handleShowSearches(message.text, message.id)
+                                handleShowSearches(message.text, message.id || null) // Pastikan message.id tidak undefined
                               }
-                              disabled={loadingSearch}
+                              // Hapus disabled={loadingSearch}
                             >
-                              {loadingSearch ? (
-                                <assets.ProgressActivityIcon
-                                  className=' w-[20px] h-[20px] fill-[#0b57d0] dark:fill-[#a8c7fa] animate-spin'
-                                  width={24}
-                                  height={24}
-                                />
-                              ) : (
-                                <assets.GoogleBrand
-                                  className=' w-[20px] h-[20px]'
-                                  width={24}
-                                  height={24}
-                                />
-                              )}
+                              {/* Hapus kondisi loading, langsung tampilkan ikon Google */}
+                              <assets.GoogleBrand
+                                className=' w-[20px] h-[20px]'
+                                width={20} // Sesuaikan
+                                height={20} // Sesuaikan
+                              />
                             </Button>
+                            {/* ... (Dropdown Menu tetap sama) ... */}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button>
                                   <assets.OptionIcon
                                     className='fill-[#1f1f1f]  w-[20px] h-[20px] dark:fill-white'
-                                    width={24}
-                                    height={24}
+                                    width={20} // Sesuaikan
+                                    height={20} // Sesuaikan
                                   />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent className='px-4 py-4 border-none rounded-md flex flex-col gap-[10px] bg-[#e9eef6] dark:bg-[#444746] shadow-md'>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem asChild> {/* Gunakan asChild */}
                                   <Button
                                     onClick={() =>
                                       handleCopyClick(message.text)
                                     }
-                                    className='bg-transparent flex gap-x-4'
+                                    className='bg-transparent hover:bg-gray-200 dark:hover:bg-gray-600 flex gap-x-4 text-black dark:text-white w-full justify-start p-2' // Styling lebih baik
                                   >
                                     <assets.ContentCopyIcon
                                       className='fill-[#1f1f1f] w-[20px] h-[20px] dark:fill-white'
-                                      width={24}
-                                      height={24}
+                                      width={20}
+                                      height={20}
                                     />
                                     <span>Copy</span>
                                   </Button>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem asChild> {/* Gunakan asChild */}
                                   <Button
                                     disabled
-                                    className='bg-transparent flex gap-x-4'
+                                    className='bg-transparent flex gap-x-4 text-black dark:text-white w-full justify-start p-2 opacity-50 cursor-not-allowed' // Styling disabled
                                   >
                                     <assets.Flag
                                       className='fill-[#1f1f1f]  w-[20px] h-[20px] dark:fill-white'
-                                      width={24}
-                                      height={24}
+                                      width={20}
+                                      height={20}
                                     />
                                     <span>Report legal issues</span>
                                   </Button>
@@ -402,31 +408,32 @@ const ChatResponse = () => {
                             </DropdownMenu>
                           </div>
 
+                          {/* Tampilkan komponen PromptGoogleSearches jika showGoogleSearches true */}
                           {messageId === message.id && showGoogleSearches ? (
                             <PromptGoogleSearches
-                              generatedPromptSearch={generatedPromptSearch}
+                              generatedPromptSearch={generatedPromptSearch} // Kirim array kosong atau hasil dummy jika perlu
                             />
-                          ) : (
-                            ""
-                          )}
+                          ) : null /* Ganti "" jadi null biar lebih React-idiomatic */
+                          }
                         </>
                       )}
                     </section>
                   </div>
                 </div>
               ))}
+              {/* ... (Kode loading indicator tetap sama) ... */}
               {status === "loading" && (
-                <div className='flex flex-col md:flex-row items-start justify-start gap-4'>
+                <div className='flex flex-col md:flex-row items-start justify-start gap-4 px-4'> {/* Tambah padding */}
                   <Image
                     src={assets.gemini_icon}
-                    alt='gemini_icon'
-                    className='w-8 h-8 md:w-9 md:h-9 spin_animation rounded-full mt-0 md:-mt-1'
+                    alt='gemini_icon loading'
+                    className='w-8 h-8 md:w-9 md:h-9 spin_animation rounded-full mt-0' // Hapus md:-mt-1 jika tidak perlu
                   />
-                  <div className='flex items-start gap-5 md:gap-8 w-full md:w-auto'>
-                    <div className='loading_div w-full md:w-[700px] flex flex-col gap-3 md:gap-4 mb-4 md:mb-6'>
-                      <hr className='skeleton-loader w-full' />
-                      <hr className='skeleton-loader w-full' />
-                      <hr className='skeleton-loader w-3/4' />
+                  <div className='flex items-start gap-5 md:gap-8 w-full'>
+                    <div className='loading_div w-full flex flex-col gap-3 md:gap-4'> {/* Hapus md:w-[700px] agar lebih fleksibel */}
+                      <hr className='skeleton-loader w-full h-4 rounded bg-gray-200 dark:bg-gray-700' /> {/* Styling skeleton */}
+                      <hr className='skeleton-loader w-full h-4 rounded bg-gray-200 dark:bg-gray-700' />
+                      <hr className='skeleton-loader w-3/4 h-4 rounded bg-gray-200 dark:bg-gray-700' />
                     </div>
                   </div>
                 </div>
